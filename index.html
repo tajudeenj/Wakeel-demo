@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wakeel live run</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E9EEEC; --surface:#FFFFFF; --ink:#13302A; --muted:#566A64; --line:#C9D4D0;
+  --ok:#0E6B5A; --ok-tint:#DCEFEA; --block:#B3261E; --block-tint:#F8E1DF;
+  --hold:#9A6408; --hold-tint:#F6EBD3; --seal:#8C6A2F; --focus:#1D5FD1;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1917; --surface:#16241F; --ink:#E2ECE8; --muted:#97AAA4; --line:#2B3D38;
+    --ok:#45C0A3; --ok-tint:#173A32; --block:#F07A72; --block-tint:#3D1D1B;
+    --hold:#E4B35C; --hold-tint:#3A2E17; --seal:#D4B072; --focus:#8AB4FF;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1917; --surface:#16241F; --ink:#E2ECE8; --muted:#97AAA4; --line:#2B3D38;
+  --ok:#45C0A3; --ok-tint:#173A32; --block:#F07A72; --block-tint:#3D1D1B;
+  --hold:#E4B35C; --hold-tint:#3A2E17; --seal:#D4B072; --focus:#8AB4FF;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.5}
+main{max-width:720px;margin:0 auto;padding:24px 18px 120px}
+h1{font-size:clamp(30px,8vw,44px);line-height:1.05;letter-spacing:-0.02em;margin:0 0 10px;font-weight:800}
+h2{font-size:20px;margin:0 0 12px;font-weight:700;letter-spacing:-0.01em}
+p{margin:0}
+.lede{color:var(--muted);max-width:56ch}
+.brand{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+.brand .ar{font-family:"Amiri",serif;font-size:30px;color:var(--seal)}
+section{margin-top:28px}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 16px;font-weight:600}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,input:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.primary{background:var(--ok);border-color:var(--ok);color:#fff}
+:root[data-theme="dark"] .primary{color:#0E1917}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .primary{color:#0E1917}}
+.kill{background:var(--block);border-color:var(--block);color:#fff;font-weight:700}
+.link{border:none;background:none;padding:6px 0;color:var(--muted);text-decoration:underline;font-weight:500}
+
+/* Mandate: the one memorable object */
+.mandate{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px 20px 20px;overflow:hidden}
+.mandate::before{content:"";position:absolute;inset:8px;border:1px solid var(--line);border-radius:9px;pointer-events:none}
+.mandate h2{font-size:22px;padding-right:110px}
+.mandate .sub{color:var(--muted);font-size:14px;margin-bottom:16px;padding-right:110px}
+.terms{display:grid;grid-template-columns:auto 1fr;gap:10px 16px;align-items:center;position:relative}
+.terms dt{color:var(--muted);font-size:14px}
+.terms dd{margin:0;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:13px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--ok-tint);color:var(--ok)}
+.terms input{font:inherit;font-weight:600;width:9.5em;max-width:100%;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.terms input:disabled{border-color:transparent;background:transparent;padding-left:0}
+.sign-row{margin-top:18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;position:relative}
+.sig{font-size:12px;color:var(--muted);word-break:break-all}
+
+.seal{position:absolute;top:18px;right:18px;width:96px;height:96px;border-radius:50%;display:grid;place-items:center;border:2px dashed var(--line);color:var(--line);font-family:"Amiri",serif;font-size:30px;line-height:1;transform:rotate(-8deg);z-index:1}
+.seal span.state{position:absolute;bottom:14px;font-family:"Archivo",sans-serif;font-size:10px;font-weight:700;letter-spacing:.04em}
+.seal.signed{border:3px double var(--seal);color:var(--seal);background:color-mix(in srgb,var(--seal) 10%,transparent)}
+.seal.signed.press{animation:press .5s cubic-bezier(.2,1.6,.4,1)}
+.seal.revoked{border:3px double var(--block);color:var(--block);background:var(--block-tint)}
+.seal.revoked::after{content:"";position:absolute;width:118%;height:3px;background:var(--block);transform:rotate(-30deg)}
+@keyframes press{0%{transform:rotate(-8deg) scale(1.6);opacity:0}100%{transform:rotate(-8deg) scale(1);opacity:1}}
+
+.budget{margin-top:18px;position:relative}
+.budget .row{display:flex;justify-content:space-between;font-size:14px;color:var(--muted);margin-bottom:6px}
+.budget .row b{color:var(--ink)}
+.bar{height:10px;border-radius:999px;background:var(--bg);border:1px solid var(--line);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--ok);transition:width .5s ease}
+
+/* Feed */
+.feed{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.empty{color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:16px}
+.ev{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:10px;padding:12px 14px}
+.ev.allowed,.ev.verified{border-left-color:var(--ok)}
+.ev.blocked,.ev.revoked{border-left-color:var(--block)}
+.ev.held{border-left-color:var(--hold)}
+.ev .head{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.ev .who{font-size:13px;color:var(--muted);font-weight:600}
+.badge{font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.allowed .badge,.verified .badge{background:var(--ok-tint);color:var(--ok)}
+.blocked .badge,.revoked .badge{background:var(--block-tint);color:var(--block)}
+.held .badge{background:var(--hold-tint);color:var(--hold)}
+.ev .what{font-weight:600;margin-top:2px}
+.ev .amt{font-variant-numeric:tabular-nums;white-space:nowrap}
+.ev .why{font-size:14px;color:var(--muted);margin-top:2px}
+.note{font-size:14px;color:var(--muted);font-style:italic;padding:2px 4px}
+.ev.fresh{animation:flash .9s ease}
+@keyframes flash{from{background:var(--ok-tint)}to{background:var(--surface)}}
+
+/* Ledger */
+.ledger-tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.verdict{font-size:14px;font-weight:600}
+.verdict.good{color:var(--ok)} .verdict.bad{color:var(--block)}
+.ledger-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600}
+td.h{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted)}
+tr.broken td{background:var(--block-tint)}
+tr:last-child td{border-bottom:none}
+
+/* Control bar */
+.controls{position:fixed;left:0;right:0;bottom:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px))}
+.controls .in{max-width:720px;margin:0 auto;display:flex;gap:10px}
+.controls .in button{flex:1}
+.controls .in .link{flex:0 0 auto}
+
+/* Approval sheet */
+.sheet-bg{position:fixed;inset:0;z-index:10;background:rgba(5,15,12,.45);display:none;align-items:flex-end;justify-content:center}
+.sheet-bg.open{display:flex}
+.sheet{background:var(--surface);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom,0px));animation:up .3s ease}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.sheet .big{font-size:32px;font-weight:800;letter-spacing:-0.02em;margin:6px 0}
+.sheet .btns{display:flex;gap:10px;margin-top:18px}
+.sheet .btns button{flex:1;padding:14px}
+.small{font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand"><h1>Wakeel</h1><span class="ar" lang="ar">وكيل</span></div>
+    <p class="lede">Live run: an AI agent opens a café in Dubai for its owner. It can only act inside a signed mandate, and every request it makes is checked before it happens.</p>
+  </header>
+
+  <section aria-labelledby="m-title">
+    <div class="mandate">
+      <div class="seal" id="seal" aria-live="polite"><span lang="ar">وكيل</span><span class="state" id="sealState">Unsigned</span></div>
+      <h2 id="m-title">Mandate</h2>
+      <p class="sub">Set the limits, then sign. The agent cannot exceed them.</p>
+      <dl class="terms">
+        <dt>Principal</dt><dd>Layla Hassan, café founder</dd>
+        <dt>Agent</dt><dd>Café setup agent</dd>
+        <dt>Allowed tasks</dt><dd><div class="chips"><span class="chip">Trade licence</span><span class="chip">Bank account</span><span class="chip">Equipment</span><span class="chip">Lease</span></div></dd>
+        <dt><label for="cap">Spend cap (AED)</label></dt><dd><input id="cap" type="number" inputmode="numeric" min="1000" step="100" value="15000"></dd>
+        <dt><label for="thr">Ask me above (AED)</label></dt><dd><input id="thr" type="number" inputmode="numeric" min="0" step="100" value="5000"></dd>
+        <dt>Valid until</dt><dd id="expiry"></dd>
+      </dl>
+      <div class="sign-row">
+        <button class="primary" id="signBtn">Sign mandate</button>
+        <span class="sig" id="sigText"></span>
+      </div>
+      <div class="budget">
+        <div class="row"><span>Spent <b id="spent">AED 0</b></span><span>Cap <b id="capShow">AED 15,000</b></span></div>
+        <div class="bar" role="progressbar" aria-label="Spend against cap" id="bar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="barFill"></i></div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="f-title">
+    <h2 id="f-title">What the agents tried</h2>
+    <ul class="feed" id="feed" aria-live="polite"></ul>
+  </section>
+
+  <section aria-labelledby="l-title">
+    <h2 id="l-title">Evidence ledger</h2>
+    <p class="small" style="margin-bottom:12px">Each decision is hash-chained to the one before. Change any entry and the chain breaks.</p>
+    <div class="ledger-tools">
+      <button id="verifyBtn">Verify chain</button>
+      <button class="link" id="tamperBtn">Tamper with an entry</button>
+      <span class="verdict" id="verdict" aria-live="polite"></span>
+    </div>
+    <div class="ledger-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Decision</th><th>Action</th><th>Hash</th></tr></thead>
+        <tbody id="ledger"><tr><td colspan="4" class="small">No entries yet.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<div class="controls">
+  <div class="in">
+    <button class="primary" id="runBtn" disabled>Start run</button>
+    <button class="kill" id="killBtn" disabled>Kill switch</button>
+    <button class="link" id="resetBtn">Reset</button>
+  </div>
+</div>
+
+<div class="sheet-bg" id="sheetBg" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="sheet">
+    <p class="small" id="sheetWho"></p>
+    <h2 id="sheetTitle">Approve this payment?</h2>
+    <p class="big" id="sheetAmt"></p>
+    <p id="sheetWhat"></p>
+    <p class="small" id="sheetWhy" style="margin-top:6px"></p>
+    <div class="btns">
+      <button id="declineBtn">Decline</button>
+      <button class="primary" id="approveBtn">Approve with passkey</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const enc = s => new TextEncoder().encode(s);
+const fmt = n => 'AED ' + Number(n).toLocaleString('en-US');
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const STEP_MS = 1100;
+
+const WATCHLIST = ['Crescent Vale Trading'];   // fictional sandbox watchlist
+const SCOPE_LABEL = {licence:'Trade licence', bank:'Bank account', equipment:'Equipment', lease:'Lease', credit:'Credit products'};
+
+const SCRIPT = [
+  {kind:'handshake', agent:'Licensing agent'},
+  {agent:'Licensing agent', text:'Reserve trade name "Saffron & Steam"', scope:'licence', amount:620, payee:'Dubai Economy (sandbox)'},
+  {agent:'Licensing agent', text:'Fast-track licence bundle', scope:'licence', amount:40000, payee:'Dubai Economy (sandbox)'},
+  {kind:'note', text:'Agent re-planned: standard licence route instead of fast-track.'},
+  {kind:'handshake', agent:'Bank agent'},
+  {agent:'Bank agent', text:'Open business current account', scope:'bank', amount:0},
+  {agent:'Bank agent', text:'Apply for a business credit card', scope:'credit', amount:0},
+  {agent:'Bank agent', text:'Pay equipment deposit to Crescent Vale Trading', scope:'equipment', amount:1800, payee:'Crescent Vale Trading'},
+  {kind:'note', text:'Agent re-planned: switching to another equipment supplier.'},
+  {agent:'Bank agent', text:'Pay equipment deposit to Al Noor Kitchen Supplies', scope:'equipment', amount:1800, payee:'Al Noor Kitchen Supplies'},
+  {kind:'handshake', agent:'Tenancy agent'},
+  {agent:'Tenancy agent', text:'Pay lease security deposit, Unit 4, Al Seef', scope:'lease', amount:12400, payee:'Al Seef Properties'},
+  {agent:'Licensing agent', text:'Submit trade licence application', scope:'licence', amount:0}
+];
+
+let S;
+function fresh(){
+  return {signed:false, revoked:false, running:false, done:false, spent:0, step:0,
+          mandate:null, keys:null, sig:null, sigHex:'', ledger:[], events:[], awaiting:null, verdict:null, broken:-1};
+}
+
+async function sha(s){
+  const b = await crypto.subtle.digest('SHA-256', enc(s));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2,'0')).join('');
+}
+const bodyOf = e => ({i:e.i, ts:e.ts, agent:e.agent, action:e.action, amount:e.amount, decision:e.decision, reason:e.reason});
+
+async function record(e){
+  const prev = S.ledger.length ? S.ledger.at(-1).hash : '0'.repeat(64);
+  const body = {i:S.ledger.length + 1, ts:new Date().toISOString(), agent:e.agent, action:e.text, amount:e.amount || 0, decision:e.decision, reason:e.reason};
+  const hash = await sha(prev + JSON.stringify(body));
+  S.ledger.push({...body, prev, hash});
+  S.events.push({type:'decision', ...body});
+  S.verdict = null; S.broken = -1;
+  render(true);
+}
+
+function guard(a){
+  const m = S.mandate;
+  if (S.revoked) return {v:'blocked', reason:'Mandate revoked by the principal. Action refused.'};
+  if (Date.now() > Date.parse(m.expires)) return {v:'blocked', reason:'Mandate expired.'};
+  if (!m.scope.includes(a.scope)) return {v:'blocked', reason:`Outside the mandate: ${SCOPE_LABEL[a.scope] || a.scope} is not an allowed task.`};
+  if (a.payee && WATCHLIST.includes(a.payee)) return {v:'blocked', reason:`Compliance stop: ${a.payee} is on the sandbox watchlist. No payment made.`};
+  const left = m.cap - S.spent;
+  if (a.amount > left) return {v:'blocked', reason:`Exceeds the mandate: ${fmt(a.amount)} requested, only ${fmt(left)} left of the ${fmt(m.cap)} cap.`};
+  if (a.amount > m.approvalAbove) return {v:'held', reason:`Above the ${fmt(m.approvalAbove)} approval threshold. Waiting for the principal.`};
+  return {v:'allowed', reason: a.amount ? `Within the mandate. ${fmt(left - a.amount)} left.` : 'Within the mandate.'};
+}
+
+async function handshake(agent){
+  let ok = !S.revoked;
+  if (ok && S.keys && S.sig) {
+    try { ok = await crypto.subtle.verify({name:'ECDSA', hash:'SHA-256'}, S.keys.publicKey, S.sig, enc(JSON.stringify(S.mandate))); }
+    catch(e){ ok = false; }
+  }
+  await record({agent, text:'Verify the principal\u2019s mandate', decision: ok ? 'verified' : 'blocked',
+                reason: ok ? 'Signature valid and mandate active. Counterparty will accept requests.' : 'Mandate could not be verified. Counterparty refuses to deal.'});
+}
+
+async function processAction(a){
+  if (a.kind === 'handshake') return handshake(a.agent);
+  if (a.kind === 'note') { S.events.push({type:'note', text:a.text}); render(); return; }
+  const g = guard(a);
+  if (g.v === 'held') {
+    await record({agent:a.agent, text:a.text, amount:a.amount, decision:'held', reason:g.reason});
+    S.awaiting = a; openSheet(a, g); return;
+  }
+  if (g.v === 'allowed') S.spent += a.amount || 0;
+  await record({agent:a.agent, text:a.text, amount:a.amount, decision:g.v, reason:g.reason});
+}
+
+async function run(){
+  if (!S.signed || S.revoked || S.running || S.awaiting) return;
+  S.running = true; render();
+  while (S.step < SCRIPT.length && !S.revoked) {
+    await processAction(SCRIPT[S.step]);
+    if (S.awaiting) { S.running = false; render(); return; }
+    S.step++;
+    await wait(STEP_MS);
+  }
+  S.running = false;
+  if (!S.revoked && S.step >= SCRIPT.length) {
+    S.done = true;
+    S.events.push({type:'note', text:'Run finished: café set up inside the mandate. Now press the kill switch.'});
+  }
+  render();
+}
+
+/* Signing */
+async function sign(){
+  const cap = parseInt($('#cap').value, 10), thr = parseInt($('#thr').value, 10);
+  if (!(cap > 0) || !(thr >= 0)) { $('#sigText').textContent = 'Enter a spend cap above zero and an approval amount.'; return; }
+  S.mandate = {id:'WK-' + Date.now().toString(36).toUpperCase(), principal:'Layla Hassan', agent:'Café setup agent',
+               scope:['licence','bank','equipment','lease'], cap, approvalAbove:thr,
+               issued:new Date().toISOString(), expires:new Date(Date.now() + 7*864e5).toISOString()};
+  try {
+    S.keys = await crypto.subtle.generateKey({name:'ECDSA', namedCurve:'P-256'}, false, ['sign','verify']);
+    S.sig = await crypto.subtle.sign({name:'ECDSA', hash:'SHA-256'}, S.keys.privateKey, enc(JSON.stringify(S.mandate)));
+    S.sigHex = [...new Uint8Array(S.sig)].slice(0,12).map(x => x.toString(16).padStart(2,'0')).join('');
+  } catch(e) { S.keys = null; S.sig = null; S.sigHex = ''; }
+  S.signed = true;
+  const seal = $('#seal'); seal.classList.remove('press'); void seal.offsetWidth; seal.classList.add('press');
+  await record({agent:'Principal', text:`Sign mandate ${S.mandate.id}`, amount:0, decision:'verified',
+                reason:`Cap ${fmt(cap)}, approval above ${fmt(thr)}, four allowed tasks, valid 7 days.`});
+}
+
+/* Approval */
+function openSheet(a, g){
+  $('#sheetWho').textContent = `${a.agent} is asking`;
+  $('#sheetAmt').textContent = fmt(a.amount);
+  $('#sheetWhat').textContent = `${a.text} to ${a.payee}`;
+  $('#sheetWhy').textContent = g.reason;
+  $('#sheetBg').classList.add('open');
+  $('#approveBtn').focus();
+}
+function closeSheet(){ $('#sheetBg').classList.remove('open'); }
+
+async function decide(approve){
+  const a = S.awaiting; if (!a) return;
+  closeSheet(); S.awaiting = null;
+  if (approve) {
+    const g = guard(a);   // re-check: limits may have changed
+    if (g.v === 'blocked') { await record({agent:a.agent, text:a.text, amount:a.amount, decision:'blocked', reason:g.reason}); }
+    else { S.spent += a.amount; await record({agent:a.agent, text:a.text, amount:a.amount, decision:'allowed', reason:'Approved by the principal with passkey.'}); }
+  } else {
+    await record({agent:a.agent, text:a.text, amount:a.amount, decision:'blocked', reason:'Declined by the principal.'});
+  }
+  S.step++;
+  await wait(600);
+  run();
+}
+
+/* Kill switch */
+async function kill(){
+  if (!S.signed || S.revoked) return;
+  S.revoked = true;
+  if (S.awaiting) { const a = S.awaiting; S.awaiting = null; closeSheet();
+    await record({agent:a.agent, text:a.text, amount:a.amount, decision:'blocked', reason:'Cancelled: mandate revoked while waiting for approval.'}); }
+  await record({agent:'Principal', text:'Kill switch: revoke mandate', amount:0, decision:'revoked', reason:'Mandate revoked. Every agent holding it stops now.'});
+  await wait(1000);
+  S.events.push({type:'note', text:'Agent tries one more action after revocation\u2026'}); render();
+  await wait(900);
+  await processAction({agent:'Licensing agent', text:'Pay licence renewal', scope:'licence', amount:620, payee:'Dubai Economy (sandbox)'});
+}
+
+/* Ledger checks */
+async function verify(){
+  if (!S.ledger.length) { S.verdict = {good:false, text:'Nothing to verify yet.'}; render(); return; }
+  let prev = '0'.repeat(64);
+  for (let k = 0; k < S.ledger.length; k++) {
+    const e = S.ledger.at(k);
+    const h = await sha(prev + JSON.stringify(bodyOf(e)));
+    if (e.prev !== prev || h !== e.hash) { S.broken = k; S.verdict = {good:false, text:`Chain broken at entry ${k + 1}. Someone changed the record.`}; render(); return; }
+    prev = e.hash;
+  }
+  S.broken = -1; S.verdict = {good:true, text:`Chain intact: ${S.ledger.length} entries, untouched.`}; render();
+}
+function tamper(){
+  const k = S.ledger.findIndex(e => e.decision === 'allowed' && e.amount > 0);
+  if (k < 0) { S.verdict = {good:false, text:'Run the agents first: there is no payment to alter.'}; render(); return; }
+  const e = S.ledger.at(k);
+  e.amount = e.amount * 10;
+  S.verdict = {good:false, text:`Entry ${k + 1} edited: amount changed to ${fmt(e.amount)}. Now verify the chain.`};
+  S.broken = -1; render();
+}
+
+/* Render */
+function el(tag, cls, text){ const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+const LABEL = {allowed:'Allowed', verified:'Verified', blocked:'Blocked', held:'Needs approval', revoked:'Revoked'};
+
+function render(flash){
+  const exp = S.mandate ? new Date(S.mandate.expires) : new Date(Date.now() + 7*864e5);
+  $('#expiry').textContent = exp.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}) + ' (7 days)';
+  $('#cap').disabled = $('#thr').disabled = S.signed;
+  $('#signBtn').disabled = S.signed;
+  $('#signBtn').textContent = S.signed ? 'Signed' : 'Sign mandate';
+  $('#sigText').textContent = S.signed ? (S.sigHex ? `ECDSA P-256 signature ${S.sigHex}\u2026` : 'Signed') : '';
+
+  const seal = $('#seal');
+  seal.classList.toggle('signed', S.signed && !S.revoked);
+  seal.classList.toggle('revoked', S.revoked);
+  $('#sealState').textContent = S.revoked ? 'Revoked' : S.signed ? 'Signed' : 'Unsigned';
+
+  const cap = S.mandate ? S.mandate.cap : (parseInt($('#cap').value,10) || 0);
+  $('#spent').textContent = fmt(S.spent);
+  $('#capShow').textContent = fmt(cap);
+  const pct = cap ? Math.min(100, Math.round(S.spent / cap * 100)) : 0;
+  $('#barFill').style.width = pct + '%';
+  $('#bar').setAttribute('aria-valuenow', pct);
+
+  $('#runBtn').disabled = !S.signed || S.revoked || S.running || S.done || !!S.awaiting;
+  $('#runBtn').textContent = S.running ? 'Running\u2026' : S.done ? 'Run finished' : S.step > 0 ? 'Continue run' : 'Start run';
+  $('#killBtn').disabled = !S.signed || S.revoked;
+  $('#killBtn').textContent = S.revoked ? 'Revoked' : 'Kill switch';
+
+  const feed = $('#feed'); feed.replaceChildren();
+  if (!S.events.length) {
+    feed.append(el('li','empty', S.signed ? 'Mandate signed. Press Start run to let the agent work.' : 'Sign the mandate to begin.'));
+  } else {
+    const list = [...S.events].reverse();
+    list.forEach((ev, idx) => {
+      if (ev.type === 'note') { feed.append(el('li','note', ev.text)); return; }
+      const li = el('li', 'ev ' + ev.decision + (flash && idx === 0 ? ' fresh' : ''));
+      const head = el('div','head'); head.append(el('span','who', ev.agent), el('span','badge', LABEL[ev.decision] || ev.decision));
+      const what = el('p','what', ev.action);
+      if (ev.amount) { what.append(document.createTextNode(' ')); what.append(el('span','amt', fmt(ev.amount))); }
+      li.append(head, what, el('p','why', ev.reason));
+      feed.append(li);
+    });
+  }
+
+  const body = $('#ledger'); body.replaceChildren();
+  if (!S.ledger.length) { const tr = el('tr'); const td = el('td','small','No entries yet.'); td.colSpan = 4; tr.append(td); body.append(tr); }
+  S.ledger.forEach((e, k) => {
+    const tr = el('tr', k === S.broken ? 'broken' : '');
+    tr.append(el('td', null, String(e.i)), el('td', null, LABEL[e.decision] || e.decision),
+              el('td', null, e.action + (e.amount ? ' (' + fmt(e.amount) + ')' : '')), el('td','h', e.hash.slice(0,12) + '\u2026'));
+    body.append(tr);
+  });
+  const v = $('#verdict');
+  v.textContent = S.verdict ? S.verdict.text : '';
+  v.className = 'verdict' + (S.verdict ? (S.verdict.good ? ' good' : ' bad') : '');
+}
+
+function reset(){
+  closeSheet();
+  S = fresh();
+  $('#seal').classList.remove('press');
+  render();
+}
+
+$('#signBtn').addEventListener('click', sign);
+$('#runBtn').addEventListener('click', run);
+$('#killBtn').addEventListener('click', kill);
+$('#resetBtn').addEventListener('click', () => { if (!S.running) reset(); else { S.revoked = true; setTimeout(reset, STEP_MS + 200); } });
+$('#approveBtn').addEventListener('click', () => decide(true));
+$('#declineBtn').addEventListener('click', () => decide(false));
+$('#verifyBtn').addEventListener('click', verify);
+$('#tamperBtn').addEventListener('click', tamper);
+$('#cap').addEventListener('input', () => render());
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.awaiting) decide(false); });
+
+S = fresh();
+render();
+</script>
+</body>
+</html>
